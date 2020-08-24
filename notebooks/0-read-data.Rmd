@@ -1,0 +1,71 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Load packages
+
+```{r}
+library(readxl)
+library(tidyverse)
+```
+
+Read the data
+
+```{r}
+excel_sheets("./../data-raw/niel pobyt 2018-2019 kraj miejscowosć.xlsx") %>%
+  .[1:2] %>%
+  set_names() %>%
+  map_df(~ .x %>% 
+           read_excel(path = "./../data-raw/niel pobyt 2018-2019 kraj miejscowosć.xlsx", skip = 6, 
+                      col_names = c("same_year", "where", "region", "city", "citizenship", "women_1", "women_2", "women_3",
+                                    "men_1", "men_2", "men_3", "total")) %>%
+  filter(!str_detect(same_year, "Suma") | is.na(same_year)) %>%
+  fill(same_year, where, region, city) %>%
+  select(-total, -where) %>%
+  mutate_at(vars(women_1:men_3), replace_na, 0) %>%
+  gather(sex, captures, women_1:men_3) %>%
+  separate(sex, c("sex", "age"), sep = "_") %>%
+  filter(captures > 0 ),
+  .id = "period") %>%
+  mutate(year = str_extract(period, "\\d{4}"),
+         half = str_extract(period,  "II|I")) %>%
+  select(year, half, same_year, region, city, citizenship, sex, age, captures) %>%
+  mutate(same_year = ifelse(same_year == "nie", "no", "yes"),
+         city = str_to_title(city)) -> data_multiple_2019
+
+data_multiple_2019 
+``` 
+
+
+```{r}
+excel_sheets("./../data-raw/niel pobyt 2018-2019 kraj miejscowosć.xlsx") %>%
+  .[3:4] %>%
+  set_names() %>%
+  map_df(~ .x %>% 
+           read_excel(path = "./../data-raw/niel pobyt 2018-2019 kraj miejscowosć.xlsx", skip = 5, 
+                      col_names = c("same_year", "where", "region", "city", "citizenship", "women_1", "women_2", "women_3",
+                                    "men_1", "men_2", "men_3", "total")) %>%
+  filter(!str_detect(same_year, "Suma") | is.na(same_year)) %>%
+  fill(same_year, where, region, city) %>%
+  select(-total, -where) %>%
+  mutate_at(vars(women_1:men_3), replace_na, 0) %>%
+  gather(sex, captures, women_1:men_3) %>%
+  separate(sex, c("sex", "age"), sep = "_") %>%
+  filter(captures > 0 ),
+  .id = "period") %>%
+  mutate(year = str_extract(period, "\\d{4}"),
+         half = str_extract(period,  "II|I")) %>%
+  select(year, half, same_year, region, city, citizenship, sex, age, captures) %>%
+  mutate(same_year = ifelse(same_year == "nie", "no", "yes"),
+         city = str_to_title(city)) -> data_multiple_2018
+```
+
+```{r}
+data_for_model <- bind_rows(data_multiple_2018, data_multiple_2019)
+```
+
+```{r}
+saveRDS(object = data_for_model, file = "../data/multiple-captures.rds")
+```
+
