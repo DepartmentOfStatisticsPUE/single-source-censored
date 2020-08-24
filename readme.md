@@ -1,4 +1,4 @@
-# Readme
+# Information about the repo
 
 Repo for the project on single source capture-recapture with truncated and censored distributions. 
 
