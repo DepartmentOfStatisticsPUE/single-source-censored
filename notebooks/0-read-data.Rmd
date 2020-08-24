@@ -90,9 +90,24 @@ warsaw_data
 saveRDS(object = warsaw_data, file = "../data/multiple-captures-warsaw.rds")
 ```
 
+Data only for Wroclaw
+
 ```{r}
 data_for_model %>%
-  filter(same_year == "yes") %>%
-  count(year, same_year, warsaw = city == "Warszawa", wt = captures)
+  filter(city == "Wrocław") %>%
+  select(year, half, same_year, citizenship, sex, age, captures) %>%
+  mutate(country = countrycode(citizenship, "iso3c", "country.name"),
+         continent = countrycode(citizenship, "iso3c", "continent"),
+         country = replace_na(country, "other"),
+         continent = replace_na(continent, "other"),
+         country_group = ifelse(country %in% c("Ukraine", "Belarus", "Moldova", 
+                                               "Russia", "India", "Georgia","Vietnam"), country, "other")) -> wroclaw_data
+
+wroclaw_data
 ```
+
+```{r}
+saveRDS(object = wroclaw_data, file = "../data/multiple-captures-wroclaw.rds")
+```
+
 
