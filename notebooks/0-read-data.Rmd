@@ -8,6 +8,7 @@ Load packages
 ```{r}
 library(readxl)
 library(tidyverse)
+library(countrycode)
 ```
 
 Read the data
@@ -67,5 +68,31 @@ data_for_model <- bind_rows(data_multiple_2018, data_multiple_2019)
 
 ```{r}
 saveRDS(object = data_for_model, file = "../data/multiple-captures.rds")
+```
+
+Data only for Warsaw
+
+```{r}
+data_for_model %>%
+  filter(city == "Warszawa") %>%
+  select(year, half, same_year, citizenship, sex, age, captures) %>%
+  mutate(country = countrycode(citizenship, "iso3c", "country.name"),
+         continent = countrycode(citizenship, "iso3c", "continent"),
+         country = replace_na(country, "other"),
+         continent = replace_na(continent, "other"),
+         country_group = ifelse(country %in% c("Ukraine", "Belarus", "Moldova", 
+                                               "Russia", "India", "Georgia","Vietnam"), country, "other")) -> warsaw_data
+
+warsaw_data
+```
+
+```{r}
+saveRDS(object = warsaw_data, file = "../data/multiple-captures-warsaw.rds")
+```
+
+```{r}
+data_for_model %>%
+  filter(same_year == "yes") %>%
+  count(year, same_year, warsaw = city == "Warszawa", wt = captures)
 ```
 
