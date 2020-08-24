@@ -101,9 +101,10 @@ data_for_model %>%
          country = replace_na(country, "other"),
          continent = replace_na(continent, "other"),
          country_group = ifelse(country %in% c("Ukraine", "Belarus", "Moldova", 
-                                               "Russia", "India", "Georgia","Vietnam"), country, "other")) -> wroclaw_data
+                                               "Russia", "India", "Georgia", "Vietnam"), country, "other")) -> wroclaw_data
 
-wroclaw_data
+wroclaw_data %>%
+  count(year, same_year, wt = captures)
 ```
 
 ```{r}

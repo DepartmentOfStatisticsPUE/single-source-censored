@@ -1,0 +1,51 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(maxLik)
+```
+
+```{r}
+warsaw_data <- readRDS("../data/multiple-captures-warsaw.rds")
+warsaw_data %>%
+  filter(age > 1) %>%
+  count(year, 
+        half, 
+        y = ifelse(same_year == "no", 1, 2), 
+        censored = as.numeric(same_year == "yes"), 
+        sex, 
+        age = as.factor(age), 
+        country_group, wt = captures) %>%
+  filter(year == 2019, half == "II") -> simple_model
+
+simple_model %>%
+  count(y, sex, age, wt = n)
+```
+
+```{r}
+zero_trun_censored <- function(par, y, x, w) {
+  lambda <- as.numeric(exp(x %*% par))
+  y_ones <- y == 1
+  pr_y_ones <- sum( log( dpois(1, lambda[y_ones]) / (1-dpois(0, lambda[y_ones])))*w[y_ones] )
+  pr_y_more <- sum( log( (1 - ppois(q=1, lambda[!y_ones])) / (1-dpois(0, lambda[!y_ones])))*w[!y_ones] )
+  res <- pr_y_ones + pr_y_more
+  res
+}
+```
+
+```{r}
+y <- simple_model$y
+x <- model.matrix(y ~ 1 + age + sex + I(country_group == "Ukraine"), data = simple_model)
+w <- simple_model$n
+par <- rep(0, ncol(x))
+names(par) <- colnames(x)
+res <- maxLik(logLik = zero_trun_censored, method = "BFGS", start = par, y = y, x = x, w = w)
+summary(res)
+```
+
+
+
+
+
