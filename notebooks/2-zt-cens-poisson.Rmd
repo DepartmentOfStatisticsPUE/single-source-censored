@@ -5,6 +5,7 @@ output: html_notebook
 
 ```{r}
 library(maxLik)
+library(tidyverse)
 ```
 
 ```{r}
@@ -21,7 +22,7 @@ warsaw_data %>%
   filter(year == 2019, half == "II") -> simple_model
 
 simple_model %>%
-  count(y, sex, age, wt = n)
+  count(year,  country_group, y, wt = n)
 ```
 
 ```{r}

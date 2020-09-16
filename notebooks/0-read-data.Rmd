@@ -113,3 +113,82 @@ saveRDS(object = wroclaw_data, file = "../data/multiple-captures-wroclaw.rds")
 
 
 
+## Police data
+
+- Rodzaj adresu - zawiera się informacja o rodzaju adresów zarejestrowanych przy poszczególnej osobie 
+a także informację o jednostce wojewódzkiej i gminnej oraz miejscowość zamieszkania. (przy notowaniach i poszukiwaniach razem, natomiast z rejestracjami procesowymi i wykroczeniami w ruchu drogowym w oddzielnych arkuszach w załączniku. 
+
+- arkusz "orp" odnosi się do rejestracji procesowych, 
+- arkusz "onk" - notowania kryminalne, 
+- arkusz "opz" - poszukiwania, 
+- arkusz "owr" - wykroczenia w ruchu drogowym. 
+
+```{r}
+excel_sheets("~/git/zbiory/cudzoziemcy/Policja/Osoba-cudzoziemcy-2019-20200906.xlsx")
+```
+
+Number of rows
+
+```{r}
+map(1:6, 
+    function(x) suppressMessages(read_excel("~/git/zbiory/cudzoziemcy/Policja/Osoba-cudzoziemcy-2019-20200906.xlsx", sheet = x))) %>%
+  map_dbl(nrow)
+```
+
+```{r}
+
+## process
+police_orp_address <- read_excel("~/git/zbiory/cudzoziemcy/Policja/Osoba-cudzoziemcy-2019-20200906.xlsx", 
+                     skip = 3,
+                     sheet = "orp adres", 
+                     col_names = c("id", "city", "woj", "gmina")) %>%
+  fill(id) %>%
+  filter(str_detect(gmina, "^(WARSZAWA|WROCŁAW)"), 
+         str_detect(gmina, "OBSZAR MIEJSKI")) %>%
+  mutate(city = str_extract(gmina, "^(WARSZAWA|WROCŁAW)")) %>%
+  distinct(id, city) 
+
+
+police_owr_address <- read_excel("~/git/zbiory/cudzoziemcy/Policja/Osoba-cudzoziemcy-2019-20200906.xlsx", 
+                     skip = 3,
+                     sheet = "owr adres", 
+                     col_names = c("id", "city", "woj", "gmina")) %>%
+  fill(id) %>%
+  filter(str_detect(gmina, "^(WARSZAWA|WROCŁAW)"), 
+         str_detect(gmina, "OBSZAR MIEJSKI")) %>%
+  mutate(city = str_extract(gmina, "^(WARSZAWA|WROCŁAW)")) %>%
+  distinct(id, city) 
+
+
+police_orp <- read_excel("~/git/zbiory/cudzoziemcy/Policja/Osoba-cudzoziemcy-2019-20200906.xlsx", 
+                     skip = 3,
+                     sheet = "orp", 
+                     col_names = c("id", "age", "sex", "pesel", "country",  "year", "quarter", "address_type")) %>%
+  filter(!is.na(address_type)) %>%
+  fill(id) %>%
+  group_by(id) %>%
+  fill(age, sex, pesel, country, year, quarter) %>%
+  ungroup() %>%
+  left_join(police_orp_address) %>%
+  filter(!is.na(city)) %>%
+  distinct(id, age, sex, country, year, quarter, city)
+
+
+police_owr <- read_excel("~/git/zbiory/cudzoziemcy/Policja/Osoba-cudzoziemcy-2019-20200906.xlsx", 
+                     skip = 3,
+                     sheet = "orp", 
+                     col_names = c("id", "age", "sex", "pesel", "country",  "year", "quarter", "address_type")) %>%
+  filter(!is.na(address_type)) %>%
+  fill(id) %>%
+  group_by(id) %>%
+  fill(age, sex, pesel, country, year, quarter) %>%
+  ungroup() %>%
+  left_join(police_owr_address) %>%
+  filter(!is.na(city)) %>%
+  distinct(id, age, sex, country, year, quarter, city)
+
+police_owr
+```
+
+
+
