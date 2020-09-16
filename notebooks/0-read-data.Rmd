@@ -187,7 +187,10 @@ police_owr <- read_excel("~/git/zbiory/cudzoziemcy/Policja/Osoba-cudzoziemcy-201
   filter(!is.na(city)) %>%
   distinct(id, age, sex, country, year, quarter, city)
 
-police_owr
+police_orp %>%
+  bind_rows(police_owr) %>%
+  distinct(id, year) %>%
+  count(year)
 ```
 
 
